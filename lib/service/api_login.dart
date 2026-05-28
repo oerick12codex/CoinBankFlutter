@@ -1,32 +1,25 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'mysql_service.dart';
+
+final mysql = MySQLService();
 
 Future<bool> login({
   required String email,
   required String senha,
 }) async {
 
-  final url = Uri.parse(
-    'https://servidor-usuario.up.railway.app/contausuario/login',
-  );
+  try {
 
-  final body = {
-    "email": email,
-    "senha": senha,
-  };
+    final sucesso = await mysql.login(
+      email: email,
+      senha: senha,
+    );
 
-  final response = await http.post(
-    url,
+    return sucesso;
 
-    headers: {
-      "Content-Type": "application/json",
-    },
+  } catch (e) {
 
-    body: jsonEncode(body),
-  );
+    print("Erro no login: $e");
 
-  print(response.statusCode);
-  print(response.body);
-
-  return response.statusCode == 200;
+    return false;
+  }
 }
