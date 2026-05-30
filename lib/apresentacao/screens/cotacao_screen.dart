@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../service/api_service.dart';
+import '../../service/api_service.dart';
 
 class CotacaoScreen extends StatefulWidget {
   const CotacaoScreen({super.key});
