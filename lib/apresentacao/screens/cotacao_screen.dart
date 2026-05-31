@@ -1,5 +1,6 @@
+// lib/presentation/screens/cotacao_screen.dart
 import 'package:flutter/material.dart';
-import '../../service/api_service.dart';
+import '../controllers/cotacao_controller.dart';
 
 class CotacaoScreen extends StatefulWidget {
   const CotacaoScreen({super.key});
@@ -9,129 +10,103 @@ class CotacaoScreen extends StatefulWidget {
 }
 
 class _CotacaoScreenState extends State<CotacaoScreen> {
-  double? dolar;
-  double? euro;
+  // Instanciamos o controlador da tela
+  final CotacaoController _controller = CotacaoController();
 
   @override
   void initState() {
     super.initState();
-    carregarCotacoes();
-  }
-
-  void carregarCotacoes() async {
-    final moedas = await ApiService.getCurrencies();
-
-    setState(() {
-      dolar = moedas["USD"];
-      euro = moedas["EUR"];
-    });
-  }
-
-  Widget buildCard({
-    required String moeda,
-    required double valor,
-    required IconData icon,
-  }) {
-    return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 40,
-              color: Colors.green,
-            ),
-
-            const SizedBox(width: 20),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  moeda,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                Text(
-                  "R\$ ${valor.toStringAsFixed(2)}",
-                  style: const TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+    // Dispara a busca automática assim que a tela abre
+    _controller.buscarCotacoes();
   }
 
   @override
   Widget build(BuildContext context) {
-    bool carregando = dolar == null || euro == null;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Cotação"),
-        centerTitle: true,
+        title: const Text("Cotações de Moedas"),
+        backgroundColor: const Color.fromARGB(255, 8, 56, 28),
+        foregroundColor: Colors.white,
       ),
+      body: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, child) {
+          // 1º Estado: Carregando dados da API
+          if (_controller.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation(Color.fromARGB(255, 8, 56, 28)),
+              ),
+            );
+          }
 
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+          // 2º Estado: Se aconteceu algum erro (ex: sem internet)
+          if (_controller.errorMessage != null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      _controller.errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _controller.buscarCotacoes,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Tentar Novamente"),
+                    )
+                  ],
+                ),
+              ),
+            );
+          }
 
-        child: carregando
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+          final double valorDolar = _controller.moedas["USD"] ?? 0.00;
+          final double valorEuro =  _controller.moedas["EUR"] ?? 0.00;
 
-                  const SizedBox(height: 20),
+          final usd = valorDolar.toStringAsFixed(2);
+          final eur = valorEuro.toStringAsFixed(2);
 
-                  const Text(
-                    "Cotações do Dia",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
+          return RefreshIndicator(
+            onRefresh: _controller.buscarCotacoes, // Permite puxar a tela para atualizar
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: const Icon(Icons.attach_money, color: Colors.green, size: 36),
+                    title: const Text("Dólar Comercial (USD)"),
+                    trailing: Text(
+                      "R\$ $usd",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  buildCard(
-                    moeda: "Dólar (USD)",
-                    valor: dolar!,
-                    icon: Icons.attach_money,
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: const Icon(Icons.euro, color: Colors.blue, size: 36),
+                    title: const Text("Euro (EUR)"),
+                    trailing: Text(
+                      "R\$ $eur",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                   ),
-
-                  buildCard(
-                    moeda: "Euro (EUR)",
-                    valor: euro!,
-                    icon: Icons.euro,
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  ElevatedButton.icon(
-                    onPressed: carregarCotacoes,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Atualizar"),
-                  ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

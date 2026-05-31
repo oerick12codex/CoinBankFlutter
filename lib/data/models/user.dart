@@ -1,21 +1,32 @@
 class User {
+  final String id;
   final String nome;
   final String email;
   final String senha;
-  double balance;
+  final String chavePix;
+  double saldo;
 
-  User({ required this.nome, required this.email, required this.senha, this.balance = 1000.0});
+  User({
+    required this.id,
+    required this.nome,
+    required this.email,
+    required this.senha,
+    required this.chavePix,
+    required this.saldo,
+  });
 
   Map<String, dynamic> toJson() {
-    return {'nome': nome,'email': email, 'senha': senha, 'balance': balance};
+    return {'nome': nome, 'email': email, 'senha': senha, 'saldo': saldo};
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-       nome: json['nome'],
+      id: json['id'],
+      nome: json['nome'],
       email: json['email'],
       senha: json['senha'],
-      balance: (json['balance'] as num).toDouble(),
+      chavePix: json['chave_pix'],
+      saldo: (json['saldo'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
