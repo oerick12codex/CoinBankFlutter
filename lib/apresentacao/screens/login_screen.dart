@@ -1,5 +1,7 @@
+import 'package:coinbank/models/user.dart';
+import 'package:coinbank/service/api_login.dart';
 import 'package:flutter/material.dart';
-import '../../data/models/user.dart';
+import '../models/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,8 +11,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController userController = TextEditingController();
-  final TextEditingController passController = TextEditingController();
+
+  final TextEditingController userController =
+      TextEditingController();
+
+  final TextEditingController passController =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -21,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
 
@@ -33,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
 
-                // Logo / Nome do banco
                 const Icon(
                   Icons.account_balance,
                   size: 80,
@@ -53,11 +59,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                // Campo usuário
                 TextField(
                   controller: userController,
                   decoration: InputDecoration(
-                    labelText: "Usuário",
+                    labelText: "Email",
                     prefixIcon: const Icon(Icons.person),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -67,7 +72,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // Campo senha
                 TextField(
                   controller: passController,
                   obscureText: true,
@@ -82,23 +86,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                // Botão entrar
                 SizedBox(
                   width: double.infinity,
                   height: 50,
 
                   child: ElevatedButton(
-                    onPressed: () {
-                      final user = User(
-                        nome: userController.text,
+
+                    onPressed: () async {
+
+                      final sucesso = await login(
+                        email: userController.text,
                         senha: passController.text,
                       );
 
-                      Navigator.pushReplacementNamed(context, '/home', arguments: user);
+                      if (sucesso) {
+
+                        final user = User(
+                          nome: userController.text,
+                          email: userController.text,
+                          senha: passController.text,
+                        );
+
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/home',
+                          arguments: user,
+                        );
+
+                      } else {
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Login inválido"),
+                          ),
+                        );
+
+                      }
                     },
-                    
+
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 8, 56, 28),
+                      backgroundColor:
+                          const Color.fromARGB(255, 8, 56, 28),
+
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -106,16 +135,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     child: const Text(
                       "Entrar",
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Esqueceu sua senha?"),
                 ),
               ],
             ),
